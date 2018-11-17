@@ -7,7 +7,6 @@
 # Assign sentiment score
 # Compute average sentiment
 
-
 import pandas as pd
 import re
 import nltk.data
@@ -16,13 +15,14 @@ import math
 from langdetect import detect
 from sklearn.feature_extraction.text import CountVectorizer
 
-data_ori = pd.read_csv('current.csv')
-# business = pd.read_csv('yelp_business.csv')
-# data_ori = data_one.merge(business, left_on = 'business_id', right_on = 'business_id',how='left')
+data_one = pd.read_csv('current.csv')
+business = pd.read_csv('yelp_business.csv')
+data_ori = data_one.merge(business, left_on = 'business_id', right_on = 'business_id',how='left')
 
 nltk.download('punkt')
 tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-data_ori['text_sentence'] = data_ori['text'].apply(lambda x: tokenizer.tokenize(x))
+data_ori['text_sentence'] = data_ori['text'].apply(lambda x: \
+    tokenizer.tokenize(x.lower().replace('\n',' ')))
 # data['text_sentence'] = data['text'].apply(lambda x: re.split(r"\.|\?|\!",x))
 # print(data['text_sentence'].head())
 
@@ -60,5 +60,9 @@ def extract_key_text(comment,thres):
 
 data['key_comment'] = data['text_sentence'].apply(lambda x: extract_key_text(x,6))
 
+columns_to_keep = ['name', 'text', 'key_comment', 'text_length', 'review_count']
 
-print(data_ori['name'].head())
+data_drop = data[columns_to_keep]
+
+
+print(data_drop.head())
