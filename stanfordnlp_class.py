@@ -1,8 +1,3 @@
-'''
-A sample code usage of the python package stanfordcorenlp to access a Stanford CoreNLP server.
-Written as part of the blog post: https://www.khalidalnajjar.com/how-to-setup-and-use-stanford-corenlp-server-with-python/
-'''
-
 from stanfordcorenlp import StanfordCoreNLP
 import logging
 import json
@@ -12,10 +7,20 @@ class StanfordNLP:
         self.nlp = StanfordCoreNLP(host, port=port,
                                    timeout=30000)  # , quiet=False, logging_level=logging.DEBUG)
         self.props = {
-            'annotators': 'tokenize,ssplit,pos,lemma,ner,parse,depparse,dcoref,relation',
+            'annotators': 'truecase',
             'pipelineLanguage': 'en',
-            'outputFormat': 'json'
+            'outputFormat': 'json',
+            'truecase.overwriteText' : 'true'
         }
+
+    def to_truecase(self, sentence):
+        sentences = json.loads(self.nlp.annotate(sentence, properties=self.props))['sentences']
+        normal_text = ""
+        for sentence in sentences:
+            tokens = sentence['tokens']
+            for js in tokens:
+                normal_text = normal_text + js['word'] + " "
+        return normal_text
 
     def word_tokenize(self, sentence):
         return self.nlp.word_tokenize(sentence)
@@ -49,10 +54,10 @@ class StanfordNLP:
 
 if __name__ == '__main__':
     sNLP = StanfordNLP()
-    text = 'john donk works POI Jones wants meet Xyz Corp measuring POI short term performance metrics. '
-    print ("Annotate:{}".format(sNLP.annotate(text)))
-    print ("POS:{}".format(sNLP.pos(text)))
-    print ("Tokens:{}".format(sNLP.word_tokenize(text)))
-    print ("NER:{}".format(sNLP.ner(text)))
-    print ("Parse:{}".format(sNLP.parse(text)))
-    print ("Dep Parse:{}".format(sNLP.dependency_parse(text)))
+    text = "john donk works POI Jones wants meet Xyz Corp measuring POI short term performance metrics. "
+#    print ("Annotate:{}".format(sNLP.annotate(text)))
+#    print ("Tokens:{}".format(sNLP.word_tokenize(text)))
+#    print ("NER:{}".format(sNLP.ner(text)))
+#    print ("Parse:{}".format(sNLP.parse(text)))
+#    print ("Dep Parse:{}".format(sNLP.dependency_parse(text)))
+    print ("POS:{}".format(sNLP.pos(sNLP.to_truecase(text))))

@@ -1,1 +1,4 @@
 Here to brainstorm
+
+Assign weights to differet proper noun.
+Use sentiwordnet to capture sentiment of different grammatic relationships.
