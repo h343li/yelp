@@ -2,6 +2,7 @@
 # for each given sentences
 
 import nltk
+import numpy
 import re
 from stanfordnlp_class import StanfordNLP
 
@@ -57,10 +58,10 @@ class baseSentiModel(object):
 
                 if word not in self.swn_pos[pos]:
                     self.swn_pos[pos][word] = {}
-                self.swn_pos[pos][word][sense_num] = float(rec[2]) - float(rec[3])
+                self.swn_pos[pos][word][sense_num] = 5*(float(rec[2]) - float(rec[3]))
                 if word not in self.swn_all:
                     self.swn_all[word] = {}
-                self.swn_all[word][sense_num] = float(rec[2]) - float(rec[3])
+                self.swn_all[word][sense_num] = 5*(float(rec[2]) - float(rec[3]))
 
                 # Sort senti scores based on sense_num
         for pos_key in self.swn_pos.keys():
@@ -170,14 +171,14 @@ class baseSentiModel(object):
                     if len(neighborhood) > 1:
                         neighborhood.pop()
                         neighborhood.pop()
-                    word = '_'.join(word_minus_two)
+                    word = '-'.join(word_minus_two)
                     pos = 'unknown'
                 elif(self.is_multiword(word_minus_one)):
                     if len(scores) > 0:
                         scores.pop()
                     if len(neighborhood) > 0:
                         neighborhood.pop()
-                    word = '_'.join(word_minus_one)
+                    word = '-'.join(word_minus_one)
                     pos = 'unknown'
                 # perform lookup
                 if (pos in impt) and (word not in stopwords_defined):
@@ -186,8 +187,10 @@ class baseSentiModel(object):
                         # i.e. -> going (as a verb) -> go for verb and nones only
                         word = wnl.lemmatize(word, self.pos_short(pos))
                     score = self.score_word(word, self.pos_short(pos))
-                    i = len(negations.intersection(set(neighborhood)))
-                    score = ((-1)**i)*score
+                    if len(negations.intersection(set(neighborhood))) == 1:
+                        score = score + 4*((-1)**(sign + 1))
+                    elif len(negations.intersection(set(neighborhood))) == 2:
+                        score = score - 2*((-1)**(sign))
                     if len(amplifier.intersection(set(neighborhood))) > 0:
                         amp_exist = True
                     scores.append(score)
@@ -200,9 +203,41 @@ class baseSentiModel(object):
                 amp = 2
             else:
                 amp = 1
-            return amp * sum(scores) / float(len(scores))
+            return amp * sum(scores)
         else:
             return 0
+
+    def weighted_score(self, business_name, reviews):
+        # Compute a weighted score for each review based on the existence of NNP
+        sNLP= StanfordNLP()
+        score_review = 0
+        # weight for each sentence if plain mean is applied
+        weight = 1/len(reviews)
+        weight_list = [0]*len(reviews)
+        non_nnp_list = []
+        score_list =[]
+        idx = 0
+        nnp_name = ''
+        for j in range(len(reviews)):
+            sentence = reviews[j]
+            score_list.append(self.score(sentence))
+            tag_pair = sNLP.pos(sNLP.to_truecase(sentence))
+            word_list = [pair[0] for pair in tag_pair]
+            tag_list = [pair[1] for pair in tag_pair]
+            if 'NNP' in tag_list:
+                idx = tag_list.index('NNP')
+            elif 'NNPS' in tag_list:
+                idx = tag_list.index('NNPS')
+            nnp_name = word_list[idx]
+            if nnp_name == business_name:
+                weight_multiplier = 0.5
+                weight_list[j] = weight_multiplier*weight
+            else:
+                non_nnp_list.append(j)
+        weight_non_nnp = (1 - sum(weight_list))/len(non_nnp_list)
+        for k in non_nnp_list:
+            weight_list[k] = weight_non_nnp
+        return sum(x*y for x,y in zip(weight_list, score_list))
 
     def is_multiword(self, words):
         '''Check if a group of words is indeed a multiword expression'''
@@ -210,7 +245,12 @@ class baseSentiModel(object):
         return joined in self.swn_all
 
 sentimodel = baseSentiModel()
-text = "A few other reviews mention the smoky atmosphere which it true but \
-        again not there fault since that's there decision on how they have \
-        licensed there business. "
+text = "This was not the best restaurant I've been but it was ok. "
 print(sentimodel.score(text))
+
+name = 'Smashburger'
+test_review = ['Bbq, bacon burger is awesome!', 'Salads are great for 2.', \
+'Been coming here since it opened a few years ago for take out and dine in.', \
+'Staff has always been friendly and courteous.', \
+"3 rating because we love Smash fries but over the years, it's gotten more and more greasy."]
+print(sentimodel.weighted_score(name,test_review))
