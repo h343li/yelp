@@ -51,14 +51,16 @@ print(check['text_sentence'].iloc[0])
 
 # extract_key_text inputs a dataframe of list of sentences and returns core
 # sentences specified by thres.
-def extract_key_text(comment,thres):
-    if len(comment) > thres:
-        key_comment = comment[0:math.floor(thres/2)] + comment[-math.ceil(thres/2):]
+def extract_key_text(comment,long, thres1,thres2):
+    if len(comment) > long:
+        key_comment = comment[0:math.floor(thres2/2)] + comment[-math.ceil(thres2/2):]
+    elif len(comment) > thres1:
+        key_comment = comment[0:math.floor(thres1/2)] + comment[-math.ceil(thres1/2):]
     else:
         key_comment = comment
     return key_comment
 
-data['key_comment'] = data['text_sentence'].apply(lambda x: extract_key_text(x,6))
+data['key_comment'] = data['text_sentence'].apply(lambda x: extract_key_text(x,15,10,6))
 
 columns_to_keep = ['name', 'text', 'key_comment', 'text_length', 'review_count']
 
