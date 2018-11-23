@@ -9,14 +9,16 @@ from stanfordnlp_class import StanfordNLP
 class baseSentiModel(object):
     '''A class defined obtain sentiment score based on analyser'''
 
-    def __init__(self, filename='SentiWordNet.txt', weighting = 'geometric'):
+    def __init__(self, filename='SentiWordNet.txt', weighting = 'geometric',inten_file = 'intensifier_dic.txt'):
         if weighting not in ('geometric', 'harmonic', 'average'):
             raise ValueError(
                 'Allowed weighting options are geometric, harmonic, average')
         # parse file and build sentiwordnet dicts
         self.swn_pos = {'a': {}, 'v': {}, 'r': {}, 'n': {}}
         self.swn_all = {}
+        self.intensifier = {}
         self.build_sentidict(filename, weighting)
+        self.build_intensifier(inten_file)
 
     def average(self, score_list):
         """Get arithmetic average of scores."""
@@ -45,7 +47,7 @@ class baseSentiModel(object):
         return weighted_sum
 
     def build_sentidict(self, filename, weighting):
-        '''Extract sentiment score from file'''
+        '''Parse sentiment score from SentiWordNet'''
 
         records = [line.strip().split('\t') for line in open(filename)]
         for rec in records:
@@ -85,6 +87,13 @@ class baseSentiModel(object):
             if weighting == 'harmonic':
                 self.swn_all[word_key] = self.harmonic_weighted(sorted_score)
 
+    def build_intensifier(self,inten_file):
+        '''Extract intensifier factor for sentence scoring'''
+        record = [line.split() for line in open(inten_file)]
+        for pair in record:
+            word = pair[0]
+            multiplier = float(pair[1])
+            self.intensifier[word] = multiplier
 
     def pos_short(self,pos):
         # Convert from NLTK POS into SWN POS
@@ -121,8 +130,8 @@ class baseSentiModel(object):
                          'scarcely', 'nobody', 'none', 'dont',
                          'cant', 'couldnt',
                          'wont','wouldnt', 'doesnt'])
-        amplifier = set(['very', 'ever', 'always', 'super', '!', 'fucking',
-                         'damn', 'ridiculously', 'most', 'even'])
+        #amplifier = set(['very', 'ever', 'always', 'super', '!', 'fucking',
+                         #'damn', 'even'])
         stopwords_defined = set(['i', 'me', 'my', 'myself', 'we', 'our', 'ours',
                              'ourselves', 'you', "you're", "you've", "you'll",
                              "you'd", 'your', 'yours', 'yourself', 'yourselves',
@@ -139,9 +148,9 @@ class baseSentiModel(object):
                              'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under',
                              'again', 'further', 'then', 'once', 'here', 'there', 'when',
                              'where', 'why', 'how', 'any', 'both', 'each', 'few',
-                             'more', 'other', 'some', 'such'])
-        amp = 2
-        amp_exist = False
+                             'other', 'some', 'such'])
+
+        # amp_exist = False
         wnl = nltk.WordNetLemmatizer()
         sNLP= StanfordNLP()
         sentence_token = nltk.word_tokenize(sentence)
@@ -152,10 +161,11 @@ class baseSentiModel(object):
 
         index = 0
         for el in tagger:
+            intensify = 1
             pos = el[1]
             try:
                 word = re.match('(\w+)', el[0]).group(0).lower()
-                start = index - 10
+                start = index - 7
                 if start < 0:
                     start = 0
                 neighborhood = sentence_token[start:index]
@@ -187,23 +197,23 @@ class baseSentiModel(object):
                         # i.e. -> going (as a verb) -> go for verb and nones only
                         word = wnl.lemmatize(word, self.pos_short(pos))
                     score = self.score_word(word, self.pos_short(pos))
+                    sign = numpy.sign(score)
+                    if word in self.intensifier.keys():
+                        intensify = intensify * (1 + self.intensifier[word])
                     if len(negations.intersection(set(neighborhood))) == 1:
-                        score = score + 4*((-1)**(sign + 1))
+                        score = score + 4*((-1)*sign)
                     elif len(negations.intersection(set(neighborhood))) == 2:
-                        score = score - 2*((-1)**(sign))
-                    if len(amplifier.intersection(set(neighborhood))) > 0:
-                        amp_exist = True
+                        score = score - 2*((-1)*sign)
+                    # Basically, assume at most one intensifier per sentence??
+                    # if len(amplifier.intersection(set(neighborhood))) > 0:
+                    #    amp_exist = True
                     scores.append(score)
 
             except:
                 pass
             index += 1
         if len(scores) > 0:
-            if amp_exist == True:
-                amp = 2
-            else:
-                amp = 1
-            return amp * sum(scores)
+            return intensify * sum(scores)
         else:
             return 0
 
@@ -245,7 +255,7 @@ class baseSentiModel(object):
         return joined in self.swn_all
 
 sentimodel = baseSentiModel()
-text = "This was not the best restaurant I've been but it was ok. "
+text = "This place doesn't even deserve one star. "
 print(sentimodel.score(text))
 
 name = 'Smashburger'
