@@ -210,9 +210,9 @@ class baseSentiModel(object):
                     sign = numpy.sign(score)
                     if word in self.intensifier.keys():
                         intensify = intensify * (1 + self.intensifier[word])
-                    if len(negations.intersection(set(neighborhood))) == 1:
+                    if (len(negations.intersection(set(neighborhood))) == 1) & (score != 0):
                         score = score + 4*((-1)*sign)
-                    elif len(negations.intersection(set(neighborhood))) == 2:
+                    elif (len(negations.intersection(set(neighborhood))) == 2) & (score != 0):
                         score = score - 2*((-1)*sign)
                     # Basically, assume at most one intensifier per sentence??
                     # if len(amplifier.intersection(set(neighborhood))) > 0:
@@ -224,7 +224,7 @@ class baseSentiModel(object):
             index += 1
 
         emo_score = 0
-        for k,v in self.emotion.items():
+        for k,v in self.emoticon.items():
             if k in sentence:
                 emo_score += v
 
@@ -246,18 +246,25 @@ class baseSentiModel(object):
         nnp_name = ''
         for j in range(len(reviews)):
             sentence = reviews[j]
-            score_list.append(self.score(sentence))
+            score_sen = self.score(sentence)
+            score_list.append(score_sen)
             tag_pair = sNLP.pos(sNLP.to_truecase(sentence))
             word_list = [pair[0] for pair in tag_pair]
             tag_list = [pair[1] for pair in tag_pair]
-            if 'NNP' in tag_list:
-                idx = tag_list.index('NNP')
-            elif 'NNPS' in tag_list:
-                idx = tag_list.index('NNPS')
-            nnp_name = word_list[idx]
-            if nnp_name == business_name:
-                weight_multiplier = 0.5
-                weight_list[j] = weight_multiplier*weight
+            if ('NNP' in tag_list) | ('NNPS' in tag_list):
+                idx = 0
+                nnp_name = ''
+                if 'NNP' in tag_list:
+                    idx = tag_list.index('NNP')
+                elif 'NNPS' in tag_list:
+                    idx = tag_list.index('NNPS')
+
+                nnp_name = word_list[idx]
+                if nnp_name == business_name:
+                    weight_multiplier = 0.5
+                    weight_list[j] = weight_multiplier*weight
+                else:
+                    non_nnp_list.append(j)
             else:
                 non_nnp_list.append(j)
         weight_non_nnp = (1 - sum(weight_list))/len(non_nnp_list)
@@ -271,7 +278,7 @@ class baseSentiModel(object):
         return joined in self.swn_all
 
 sentimodel = baseSentiModel()
-text = "This place doesn't even deserve one star. "
+text = "This place doesn't even deserve one star :(. "
 print(sentimodel.score(text))
 
 name = 'Smashburger'
