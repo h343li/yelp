@@ -9,7 +9,8 @@ from stanfordnlp_class import StanfordNLP
 class baseSentiModel(object):
     '''A class defined obtain sentiment score based on analyser'''
 
-    def __init__(self, filename='SentiWordNet.txt', weighting = 'geometric',inten_file = 'intensifier_dic.txt'):
+    def __init__(self, filename='SentiWordNet.txt', weighting = 'geometric', \
+    inten_file = 'intensifier_dic.txt', emo_file = 'AFINN_emoticon.txt'):
         if weighting not in ('geometric', 'harmonic', 'average'):
             raise ValueError(
                 'Allowed weighting options are geometric, harmonic, average')
@@ -17,6 +18,7 @@ class baseSentiModel(object):
         self.swn_pos = {'a': {}, 'v': {}, 'r': {}, 'n': {}}
         self.swn_all = {}
         self.intensifier = {}
+        self.emoticon = {}
         self.build_sentidict(filename, weighting)
         self.build_intensifier(inten_file)
 
@@ -94,6 +96,14 @@ class baseSentiModel(object):
             word = pair[0]
             multiplier = float(pair[1])
             self.intensifier[word] = multiplier
+
+    def build_emotiondict(self, emo_file):
+        '''Extract emoticon factor for sentence scoring'''
+        record = [line.split() for line in open(emo_file)]
+        for pair in record:
+            word = pair[0]
+            score = float(pair[1])
+            self.emoticon[word] = score
 
     def pos_short(self,pos):
         # Convert from NLTK POS into SWN POS
@@ -212,10 +222,16 @@ class baseSentiModel(object):
             except:
                 pass
             index += 1
+
+        emo_score = 0
+        for k,v in self.emotion.items():
+            if k in sentence:
+                emo_score += v
+
         if len(scores) > 0:
-            return intensify * sum(scores)
+            return intensify * sum(scores) + emo_score
         else:
-            return 0
+            return emo_score
 
     def weighted_score(self, business_name, reviews):
         # Compute a weighted score for each review based on the existence of NNP
