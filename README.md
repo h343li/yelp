@@ -19,3 +19,6 @@ shift + i: inserts inside vim
 esc: exits insert
 : + x: saves changes
 touch filename: creates the file
+
+Connection to stanford corenlp server
+java -mx4g -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer -annotators "tokenize,ssplit,pos,lemma,parse,sentiment" -port 9000 -timeout 30000
