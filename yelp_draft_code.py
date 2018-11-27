@@ -66,5 +66,5 @@ columns_to_keep = ['name', 'text', 'key_comment', 'text_length', 'review_count']
 
 data_drop = data[columns_to_keep]
 
-
+current_with_keycomment = data_drop.to_csv('Review_with_key_comments')
 print(data_drop.head())
