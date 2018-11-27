@@ -1,4 +1,4 @@
-import nltk.corpus import wordnet as wn
+from nltk.corpus import wordnet as wn
 
 synonyms = []
 antonyms = []
