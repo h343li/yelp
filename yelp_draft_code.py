@@ -14,38 +14,15 @@ import numpy
 import math
 from langdetect import detect
 from sklearn.feature_extraction.text import CountVectorizer
-
-data_one = pd.read_csv('current.csv')
-business = pd.read_csv('yelp_business.csv')
-data_ori = data_one.merge(business, left_on = 'business_id', right_on = 'business_id',how='left')
-
 nltk.download('punkt')
 tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-data_ori['text_sentence'] = data_ori['text'].apply(lambda x: \
-    tokenizer.tokenize(x.lower().replace('\n',' ')))
-# data['text_sentence'] = data['text'].apply(lambda x: re.split(r"\.|\?|\!",x))
-# print(data['text_sentence'].head())
 
-# Detect languages
 def det_lang(astring):
     try:
         return detect(astring)
     except:
         pass
-
-data_ori['language'] = data_ori['text'].apply(lambda x:det_lang(x))
-
-# Only extract English comments
-data = data_ori[data_ori['language'] == 'en']
-
-# Check length of comment
-data['text_length'] = data['text_sentence'].apply(len)
-data['text_length'].value_counts()
-
-check = data[data['text_length'] == 9]
-
-# extract_key_text inputs a dataframe of list of sentences and returns core
-# sentences specified by thres.
+        
 def extract_key_text(comment,long, thres1,thres2):
     if len(comment) > long:
         key_comment = comment[0:math.floor(thres2/2)] + comment[-math.ceil(thres2/2):]
@@ -55,9 +32,34 @@ def extract_key_text(comment,long, thres1,thres2):
         key_comment = comment
     return key_comment
 
-data['key_comment'] = data['text_sentence'].apply(lambda x: extract_key_text(x,15,10,6))
-columns_to_keep = ['name', 'text', 'key_comment', 'text_length', 'review_count']
-data_drop = data[columns_to_keep]
+def get_key_comment(filename, filebus, long, thres1,thres2):
+    file = pd.read_csv(filename)
+    bus_file = pd.read_csv(filebus)
+    data = file.merge(bus_file, left_on = 'business_id', \
+        right_on = 'business_id',how='left')
+    data['text_sentence'] = data['text'].apply(lambda x: \
+        tokenizer.tokenize(x.lower().replace('\n',' ')))
 
-def write_key_comment():
-    data_drop.to_csv('Review_with_key_comments.csv')
+    # Detect languages
+
+
+    data['language'] = data['text'].apply(lambda x:det_lang(x))
+
+    # Only extract English comments
+    data_eng = data[data['language'] == 'en']
+
+    # Check length of comment
+    data_eng['text_length'] = data_eng['text_sentence'].apply(len)
+    data_eng['text_length'].value_counts()
+
+    check = data_eng[data_eng['text_length'] == 9]
+
+# extract_key_text inputs a dataframe of list of sentences and returns core
+# sentences specified by thres.
+
+
+    data_eng['key_comment'] = data_eng['text_sentence'].apply(lambda x: \
+        extract_key_text(x,long,thres1,thres2))
+    columns_to_keep = ['name', 'text', 'key_comment', 'text_length', 'review_count']
+    data_final = data_eng[columns_to_keep]
+    return data_final
