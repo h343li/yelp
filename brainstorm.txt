@@ -2,3 +2,37 @@ Here to brainstorm
 
 Assign weights to differet proper noun.
 Use sentiwordnet to capture sentiment of different grammatic relationships.
+
+good - bad
+great
+nice - nasty
+friendly - rude, mean
+recommend
+amazing
+better - worse
+new - old
+delicious
+happy - unhappy, mad
+clean - dirty
+fresh
+different
+fat - dry, lean
+special, unique - common
+busy - empty
+fantastic
+wonderful
+fast - slow
+professional - unprofessional
+decent
+horrible
+terrible
+cheap - expensive
+comfortable - uncomfortable
+authentic
+pleasant - unpleasant
+helpful - unhelpful, useless
+beautiful, pretty - ugly
+
+expected
+ok
+fine
