@@ -6,7 +6,7 @@ antonyms = []
 def get_syn(word):
     synonyms = []
     antonyms = []
-    for syn in wn.synsets('fast'):
+    for syn in wn.synsets(word):
 #syn = wn.synsets('fast')
         for l in syn.lemmas():
             synonyms.append(l.name())
