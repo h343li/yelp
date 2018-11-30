@@ -14,29 +14,35 @@ class senti_dictionary:
         elif sentiment == 'Negative':
             return (word in self.neg)
         else:
-            abort('Wrong sentiment')
+            exit('Wrong sentiment')
 
     def export(self, out_file):
-        new_dict = pd.concate([self.pos, self.neg], columns = ['Positive','Negative'],axis = 1)
-        new_dict.to_csv(out_file)
+        new_dict = pd.concat([pd.Series(self.pos, name = 'Positive'), pd.Series(self.neg, name = 'Negative')],axis = 1)
+        new_dict.to_csv(out_file, index = False)
 
     def add_to_dict(self, parent_word, sentiment, num_layer = 1):
 
-        parent_pos = self.get_syn(parent_word)['synonyms']
-        parent_neg = self.get_syn(parent_word)['antonyms']
+        parent_syn = self.get_syn(parent_word)['synonyms']
+        parent_ant = self.get_syn(parent_word)['antonyms']
 
         for layer in range(num_layer):
-            pos_lst = list(map(lambda x: self.get_syn(x)['synonyms'], parent_pos))
-            parent_pos = [item for sublist in pos_lst for item in sublist]
-            parent_pos = list(set(list(map(lambda x: x.lower().replace("_"," "), \
-                parent_pos))))
-            neg_lst = list(map(lambda x: self.get_syn(x)['synonyms'], parent_neg))
-            parent_neg = [item for sublist in neg_lst for item in sublist]
-            parent_neg = list(set(list(map(lambda x: x.lower().replace("_"," "), \
-                parent_neg))))
+            pos_lst = list(map(lambda x: self.get_syn(x)['synonyms'], parent_syn))
+            parent_syn = [item for sublist in pos_lst for item in sublist]
+            parent_syn = list(set(list(map(lambda x: x.lower().replace("_"," "), \
+                parent_syn))))
+            neg_lst = list(map(lambda x: self.get_syn(x)['synonyms'], parent_ant))
+            parent_ant = [item for sublist in neg_lst for item in sublist]
+            parent_ant = list(set(list(map(lambda x: x.lower().replace("_"," "), \
+                parent_ant))))
 
-        self.pos = set(self.pos + parent_pos)
-        self.neg = set(self.neg + parent_neg)
+        if sentiment == 'Positive':
+            self.pos = list(set(self.pos + parent_syn))
+            self.neg = list(set(self.neg + parent_ant))
+        elif sentiment == 'Negative':
+            self.neg = list(set(self.neg + parent_syn))
+            self.pos = list(set(self.pos + parent_ant))
+        else:
+            exit('Wrong sentiment')
 
     @staticmethod
     def get_syn(word):
@@ -53,4 +59,5 @@ class senti_dictionary:
             'antonyms':list(set(antonyms))}
 
 yelp_senti = senti_dictionary(in_file = "yelpSentiWordNet.csv")
-yelp_senti.add_to_dict(parent_word = 'good', sentiment = 'Positive')
+yelp_senti.add_to_dict(parent_word = 'different', sentiment = 'Positive')
+yelp_senti.export(out_file = "yelpSentiWordNet.csv")
