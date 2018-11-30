@@ -36,3 +36,9 @@ beautiful, pretty - ugly
 expected
 ok
 fine
+
+Assumption 1: when a word with a neutral tag encounters an intensifier, we assume
+its sentiment will become negative. e.g. "fat" -> "too fat". This assumption is
+rather reasonable because we would not expect combinations such as "too expected"
+
+Assumption 2: synonym of an intensifier is also an intensifier
