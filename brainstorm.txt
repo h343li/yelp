@@ -42,3 +42,7 @@ its sentiment will become negative. e.g. "fat" -> "too fat". This assumption is
 rather reasonable because we would not expect combinations such as "too expected"
 
 Assumption 2: synonym of an intensifier is also an intensifier
+
+Assumption 3: we assume a word cannot be both negative or positive. If a word
+belongs to both classes, we assume it's an ambiguity from the reviewer and remove
+these words
