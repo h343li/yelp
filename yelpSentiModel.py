@@ -2,55 +2,71 @@
 # for each given sentences
 
 import nltk
-import numpy
+import numpy as np
 import re
 from stanfordnlp_class import StanfordNLP
+import pandas as import pd
 
-class baseSentiModel(object):
+impt = set(['NNS', 'NN', 'NNP', 'NNPS', 'JJ', 'JJR', 'JJS',
+            'RB', 'RBR', 'RBS', 'VB', 'VBD', 'VBG', 'VBN',
+            'VBP', 'VBZ', 'unknown'])
+non_base = set(['VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'NNS', 'NNPS'])
+negations = set(['not', 'n\'t', 'less', 'no', 'never',
+                'nothing', 'nowhere', 'hardly', 'barely',
+                'scarcely', 'nobody', 'none', 'dont',
+                'cant', 'couldnt', 'no one',
+                'wont','wouldnt', 'doesnt'])
+#amplifier = set(['very', 'ever', 'always', 'super', '!', 'fucking',
+                #'damn', 'even'])
+stopwords_defined = set(['i', 'me', 'my', 'myself', 'we', 'our', 'ours',
+                        'ourselves', 'you', "you're", "you've", "you'll",
+                        "you'd", 'your', 'yours', 'yourself', 'yourselves',
+                        'he', 'him', 'his', 'himself', 'she', "she's", 'her',
+                        'hers', 'herself', 'it', "it's", 'its', 'itself',
+                        'they', 'them', 'their', 'theirs', 'themselves', 'what',
+                        'which', 'who', 'whom', 'this', 'that', "that'll", 'these',
+                        'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been',
+                        'being', 'have', 'has', 'had', 'having', 'do', 'does',
+                        'did', 'doing', 'a', 'an', 'the', 'and', 'if', 'or',
+                        'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for',
+                        'with', 'about', 'against', 'between', 'into', 'through',
+                        'during', 'before', 'after', 'above', 'below', 'to', 'from',
+                        'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under',
+                        'again', 'further', 'then', 'once', 'here', 'there', 'when',
+                        'where', 'why', 'how', 'any', 'both', 'each', 'few',
+                        'other', 'some', 'such'])
+transitional_word = set(["in the first place", "moreover", "as well as", "and", "also",
+                        "in addition", "then", "likewise", "first", "second", "third",
+                        "furthermore", "additionally", "but", "although", "in contrast",
+                        "instead", "unlike", "or", "despite", "yet", "conversely",
+                        "on the contrary", "while", "otherwise", "at the same time",
+                        "however", "in spite of", "besides", "besides", "rather",
+                        "nevertheless", "even though", "when", "so that", "whenever",
+                        "while", ""])
+
+class yelpSentiModel(object):
     '''A class defined obtain sentiment score based on analyser'''
 
-    def __init__(self, filename='SentiWordNet.txt', weighting = 'geometric', \
-    inten_file = 'intensifier_dic.txt', emo_file = 'AFINN_emoticon.txt'):
-        if weighting not in ('geometric', 'harmonic', 'average'):
-            raise ValueError(
-                'Allowed weighting options are geometric, harmonic, average')
+    def __init__(self, filename='yelpSentiWordNet.csv',inten_file = 'intensifier_dic.txt', \
+    emo_file = 'AFINN_emoticon.txt'):
+
         # parse file and build sentiwordnet dicts
-        self.swn_pos = {'a': {}, 'v': {}, 'r': {}, 'n': {}}
-        self.swn_all = {}
         self.intensifier = {}
         self.emoticon = {}
-        self.build_sentidict(filename, weighting)
-        self.build_emotiondict(emo_file)
+        self.pos = []
+        self.neg = []
+        self.ntl = []
+        self.build_sentidict(filename)
+        self.build_emoticondict(emo_file)
         self.build_intensifier(inten_file)
 
-    def average(self, score_list):
-        """Get arithmetic average of scores."""
-        if(score_list):
-            return sum(score_list) / float(len(score_list))
-        else:
-            return 0
-
-    def geometric_weighted(self, score_list):
-        """"Get geometric weighted sum of scores."""
-        weighted_sum = 0
-        num = 1
-        for el in score_list:
-            weighted_sum += (el * (1 / float(2**num)))
-            num += 1
-        return weighted_sum
-
-    # another possible weighting instead of average
-    def harmonic_weighted(self, score_list):
-        """Get harmonic weighted sum of scores."""
-        weighted_sum = 0
-        num = 2
-        for el in score_list:
-            weighted_sum += (el * (1 / float(num)))
-            num += 1
-        return weighted_sum
 
     def build_sentidict(self, filename, weighting):
-        '''Parse sentiment score from SentiWordNet'''
+        '''Parse sentiment score from yelpSentiWordNet'''
+        records = pd.read_csv(filename)
+        self.pos = records['Positive'][~pd.isna(records['Positive'])]
+        self.neg = records['Negative'][~pd.isna(records['Negative'])]
+        self.ntl = records['Neutral'][~pd.isna(records['Neutral'])]
 
         records = [line.strip().split('\t') for line in open(filename)]
         for rec in records:
@@ -92,13 +108,13 @@ class baseSentiModel(object):
 
     def build_intensifier(self,inten_file):
         '''Extract intensifier factor for sentence scoring'''
-        record = [line.split() for line in open(inten_file)]
-        for pair in record:
+        intensify = [line.split() for line in open(inten_file)]
+        for pair in intensify:
             word = pair[0]
             multiplier = float(pair[1])
             self.intensifier[word] = multiplier
 
-    def build_emotiondict(self, emo_file):
+    def build_emoticondict(self, emo_file):
         '''Extract emoticon factor for sentence scoring'''
         record = [line.split() for line in open(emo_file)]
         for pair in record:
@@ -106,60 +122,9 @@ class baseSentiModel(object):
             score = float(pair[1])
             self.emoticon[word] = score
 
-    def pos_short(self,pos):
-        # Convert from NLTK POS into SWN POS
-        if pos in set(['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ']):
-            return 'v'
-        elif pos in set(['JJ', 'JJR', 'JJS']):
-            return 'a'
-        elif pos in set(['RB', 'RBR', 'RBS']):
-            return 'r'
-        elif pos in set(['NNS', 'NN', 'NNP', 'NNPS']):
-            return 'n'
-        else:
-            return 'a'
-
-    def score_word(self, word, pos):
-        # Assign a score to the word based on its pos
-        try:
-            return self.swn_pos[pos][word]
-        except KeyError:
-            try:
-                return self.swm_all[word]
-            except KeyError:
-                return 0
 
     def score(self, sentence):
         '''Sentiment score of a given sentence, assuming sentence has been tokenzied'''
-        # init sentiwordnet lookup/scoring tools
-        impt = set(['NNS', 'NN', 'NNP', 'NNPS', 'JJ', 'JJR', 'JJS',
-                    'RB', 'RBR', 'RBS', 'VB', 'VBD', 'VBG', 'VBN',
-                    'VBP', 'VBZ', 'unknown'])
-        non_base = set(['VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'NNS', 'NNPS'])
-        negations = set(['not', 'n\'t', 'less', 'no', 'never',
-                         'nothing', 'nowhere', 'hardly', 'barely',
-                         'scarcely', 'nobody', 'none', 'dont',
-                         'cant', 'couldnt',
-                         'wont','wouldnt', 'doesnt'])
-        #amplifier = set(['very', 'ever', 'always', 'super', '!', 'fucking',
-                         #'damn', 'even'])
-        stopwords_defined = set(['i', 'me', 'my', 'myself', 'we', 'our', 'ours',
-                             'ourselves', 'you', "you're", "you've", "you'll",
-                             "you'd", 'your', 'yours', 'yourself', 'yourselves',
-                             'he', 'him', 'his', 'himself', 'she', "she's", 'her',
-                             'hers', 'herself', 'it', "it's", 'its', 'itself',
-                             'they', 'them', 'their', 'theirs', 'themselves', 'what',
-                             'which', 'who', 'whom', 'this', 'that', "that'll", 'these',
-                             'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been',
-                             'being', 'have', 'has', 'had', 'having', 'do', 'does',
-                             'did', 'doing', 'a', 'an', 'the', 'and', 'if', 'or',
-                             'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for',
-                             'with', 'about', 'against', 'between', 'into', 'through',
-                             'during', 'before', 'after', 'above', 'below', 'to', 'from',
-                             'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under',
-                             'again', 'further', 'then', 'once', 'here', 'there', 'when',
-                             'where', 'why', 'how', 'any', 'both', 'each', 'few',
-                             'other', 'some', 'such'])
 
         # amp_exist = False
         wnl = nltk.WordNetLemmatizer()
@@ -176,9 +141,8 @@ class baseSentiModel(object):
             pos = el[1]
             try:
                 word = re.match('(\w+)', el[0]).group(0).lower()
-                start = index - 7
-                if start < 0:
-                    start = 0
+                start = max(index - 7,0)
+
                 neighborhood = sentence_token[start:index]
                 # look for trailing multiword expressions
                 word_minus_one = sentence_token[index-1:index+1]
@@ -208,7 +172,7 @@ class baseSentiModel(object):
                         # i.e. -> going (as a verb) -> go for verb and nones only
                         word = wnl.lemmatize(word, self.pos_short(pos))
                     score = self.score_word(word, self.pos_short(pos))
-                    sign = numpy.sign(score)
+                    sign = np.sign(score)
                     if word in self.intensifier.keys():
                         intensify = intensify * (1 + self.intensifier[word])
                     if (len(negations.intersection(set(neighborhood))) == 1) & (score != 0):
@@ -275,8 +239,84 @@ class baseSentiModel(object):
 
     def is_multiword(self, words):
         '''Check if a group of words is indeed a multiword expression'''
-        joined = '_'.join(words)
-        return joined in self.swn_all
+        joined = '-'.join(words)
+        if joined in self.pos:
+            return 'Positive'
+        elif joined in self.neg:
+            return 'Negative'
+        elif joined in self.ntl:
+            return 'Neutral'
+        else:
+            return 'Not a multiword'
+
+    def find_neighbour(self, sentence, word, pos):
+        token = nltk.word_tokenize(sentence)
+        read_before = True
+        read_after = True
+        tokens_b = []
+        token_1_b = ''
+        token_2_b = ''
+        token_3_b = ''
+        token_4_b = ''
+        token_neigh = []
+        token_1_a = ''
+        token_2_a = ''
+        token_3_a = ''
+        token_4_a = ''
+        tokens_a = []
+        for i in range(neighbour):
+            k = i+1
+            pos_before = pos - k
+            pos_after = pos + k
+            if read_before:
+                if k == 1:
+                    token_1_b = token[pos_before]
+                    tokens_b = [token_1_b]
+                elif k == 2:
+                    token_2_b = token[pos_before] + ' ' + token_1_b
+                    token_1_b = token[pos_before]
+                    tokens_b = [token_2_b, token_1_b]
+                elif k == 3:
+                    token_3_b = token[pos_before] +  ' ' + token_2_b
+                    token_2_b = token[pos_before] + ' ' + token_1_b
+                    token_1_b = token[pos_before]
+                    tokens_b = [token_3_b, token_2_b, token_1_b]
+                else:
+                    token_4_b = token[pos_before] + ' ' + token_3_b
+                    token_3_b = token[pos_before] + ' ' + token_2_b
+                    token_2_b = token[pos_before] + ' ' + token_1_b
+                    token_1_b = token[pos_before]
+                    tokens_b = [token_4_b, token_3_b, token_2_b, token_1_b]
+                if any(x in tokens_b for x in transitional_word) or (pos_before < 0):
+                    read_before = False
+                else:
+                    token_neigh.append(token[pos_before])
+            if read_after:
+                if k == 1:
+                    token_1_a = token[pos_after]
+                    tokens_a = [token_1_a]
+                elif k == 2:
+                    token_2_a = token[pos_after] + " " + token_1_a
+                    token_1_a = token[pos_after]
+                    tokens_a = [token_2_a, token_1_a]
+                elif k == 3:
+                    token_3_a = token[pos_after] + " " + token_2_a
+                    token_2_a = token[pos_after] + " " + token_1_a
+                    token_1_a = token[pos_after]
+                    tokens_a = [token_3_a, token_2_a, token_1_a]
+                else:
+                    token_4_a = token[pos_after] + " " + token_3_a
+                    token_3_a = token[pos_after] + " " + token_2_a
+                    token_2_a = token[pos_after] + " " + token_1_a
+                    token_1_a = token[pos_after]
+                    tokens_a = [token_4_a, token_3_a, token_2_a, token_1_a]
+                if any(x in tokens_a for x in transitional_word):
+                    read_after = False
+                elif pos_after >= len(token)-1:
+                    read_after = False
+                    token_neigh.append(token[pos_after])
+                else:
+                    token_neigh.append(token[pos_after])
 
 sentimodel = baseSentiModel()
 text = "This place doesn't even deserve one star :(. "
