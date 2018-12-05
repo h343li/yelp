@@ -7,7 +7,7 @@ import pickle
 class senti_word:
     def __init__(self, word, sentiment, parent = None):
         if parent == None:
-            self.word_tree = Node(word)
+            self.word_tree = Node([word,sentiment])
         self.sentiment = sentiment
         self.child = self.get_syn(word)
         for child in self.child:
@@ -50,23 +50,24 @@ class senti_dictionary:
             pickle.dump(self.cur_dict,output)
 
 
-    def add_to_dict(self, basic_word, sentiment, num_layer = 0):
-        current_roots = self.cur_dict.keys()
-        if basic_word in current_roots:
+    def add_to_dict(self, new_word, sentiment, num_layer = 0):
+        tmp = self.cur_dict.keys()
+        current_roots = list(map(lambda x: x[0],tmp))
+        if new_word in current_roots:
             exit('Already existed!')
 
-        newWord = senti_word(basic_word, sentiment)
+        newWord = senti_word(new_word, sentiment)
         word_tree = newWord.word_tree
         while num_layer > 0:
             for child in word_tree.children:
                 senti_word(child.name,sentiment,child)
             num_layer = num_layer - 1
 
-        self.cur_dict[basic_word] = word_tree
+        self.cur_dict[new_word] = word_tree
 ##############################################################################
 # Dictionary Construction ####################################################
 ##############################################################################
-word = 'expensive'
+word = 'easy'
 
 yelp_senti = senti_dictionary(in_file = "SentiForest.pkl")
 yelp_senti.add_to_dict(word,'Positive',1)
