@@ -65,7 +65,7 @@ class senti_dictionary:
 
             self.cur_dict[new_word] = word_tree
         else:
-            self.cur_dict[new_word] = Node(new_word)
+            self.cur_dict[new_word] = Node([new_word,sentiment])
 
 ##############################################################################
 # Dictionary Construction ####################################################
@@ -73,9 +73,9 @@ class senti_dictionary:
 word = 'ok'
 
 yelp_senti = senti_dictionary(in_file = "SentiForest.pkl")
-yelp_senti.add_to_dict(word,'Neutral',True,2)
+yelp_senti.add_to_dict('five-star','Positive',False,2)
 yelp_senti.export('SentiForest.pkl')
-'''''
+
 neutral = ['ok','okay','alright','expected','common','acceptable','satisfactory','fat',\
 'dry','lean','fine']
 positive = ['good','great','nice','friendly','recommend','amazing','better','new','delicious','clean',\
@@ -84,15 +84,17 @@ positive = ['good','great','nice','friendly','recommend','amazing','better','new
 negative = ['bad','nasty','rude','mean','worse','old','unhappy','mad','dirty','slow','unprofessional'\
 'expensive','uncomfortable','ugly','unhelpful','unless']
 
-#for word in neutral:
-#    yelp_senti.add_to_dict(parent_word = word, sentiment = 'Neutral')
+for word in neutral:
+    yelp_senti.add_to_dict(word, 'Neutral', True, 2)
+    yelp_senti.export('SentiForest.pkl')
 
-#for word in positive:
-    yelp_senti.add_to_dict(parent_word = word, sentiment = 'Positive',num_layer = 0)
+for word in positive:
+    yelp_senti.add_to_dict(word, 'Positive', True, 2)
+    yelp_senti.export('SentiForest.pkl')
 
 for word in negative:
-    yelp_senti.add_to_dict(parent_word = word, sentiment = 'Negative',num_layer = 0)
+    yelp_senti.add_to_dict(word, 'Negative', True, 2)
+    yelp_senti.export('SentiForest.pkl')
 
 
 # yelp_senti.export(out_file = "yelpSentiWordNet0.csv")
-'''''
