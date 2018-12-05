@@ -70,11 +70,13 @@ class yelpSentiModel(object):
         # parse file and build sentiwordnet dicts
         self.intensifier = {}
         self.emoticon = {}
-        self.pos = flatten_dict[flatten_dict['sentiment'] = 'Positive']
-        self.neg = flatten_dict[flatten_dict['sentiment'] = 'Negative']
-        self.ntl = flatten_dict[flatten_dict['sentiment'] = 'Neutral']
+        self.pos = flatten_dict[flatten_dict['sentiment'] == 'Positive']
+        self.neg = flatten_dict[flatten_dict['sentiment'] == 'Negative']
+        self.ntl = flatten_dict[flatten_dict['sentiment'] == 'Neutral']
         self.build_emoticondict(emo_file)
         self.build_intensifier(inten_file)
+        print('Initialized!')
+        print('good' in self.pos['word'].tolist())
 
     def build_intensifier(self,inten_file):
         '''Extract intensifier factor for sentence scoring'''
@@ -112,6 +114,7 @@ class yelpSentiModel(object):
         sNLP= StanfordNLP()
         sentence_token = nltk.word_tokenize(sentence)
         tagger = sNLP.pos(sNLP.to_truecase(sentence))
+        print(tagger)
 
         # Assume that sentence is already in tokenized form
         scores = []
@@ -123,98 +126,77 @@ class yelpSentiModel(object):
             pos = el[1]
             try:
                 word = re.match('(\w+)', el[0]).group(0).lower()
-                neighborhood = self.find_neighbour(sentence_token,word,index,7)
-
+                neighborhood = self.find_neighbour(sentence_token,word,index,len(sentence_token))
+                print(word + ' line 130')
                 # look for trailing multiword expressions
-                word_minus_one = sentence_token[index-1:index+1]
-                word_minus_two = sentence_token[index-2:index+1]
-                word_minus_three = sentence_token[index-3:index+1]
-                word_minus_four = sentence_token[index-4:index+1]
 
-                # if multiword expression, fold to one expression
-                # Check multi-Senti words
-                if(self.is_multiword(word_minus_three)):
-                    if len(scores) > 2:
-                        scores.pop()
-                        scores.pop()
-                    if len(neighborhood) > 2:
-                        neighborhood.pop()
-                        neighborhood.pop()
-                    word = '-'.join(word_minus_three)
-                    pos = 'unknown'
-                elif(self.is_multiword(word_minus_two)):
-                    if len(scores) > 1:
-                        scores.pop()
-                        scores.pop()
-                    if len(neighborhood) > 1:
-                        neighborhood.pop()
-                        neighborhood.pop()
-                    word = '-'.join(word_minus_two)
-                    pos = 'unknown'
-                elif(self.is_multiword(word_minus_one)):
-                    if len(scores) > 0:
-                        scores.pop()
-                    if len(neighborhood) > 0:
-                        neighborhood.pop()
-                    word = '-'.join(word_minus_one)
-                    pos = 'unknown'
 
                 # Check if it's intensifier or not
-                if word in self.intensifier.keys():
-                    scalar = self.intensifier[word]
-                elif '-'.joined(word_minus_one) in self.intensifier.keys():
-                    intensify_word = '-'.joined(word_minus_one)
-                    scalar = self.intensifier[intensify_word]
-                elif '-'.joined(word_minus_two) in self.intensifier.keys():
-                    intensify_word = '-'.joined(word_minus_two)
-                    scalar = self.intensifier[intensify_word]
-                elif '-'.joined(word_minus_three) in self.intensifier.keys():
-                    intensify_word = '-'.joined(word_minus_three)
-                    scalar = self.intensifier[intensify_word]
-                elif '-'.joined(word_minus_four) in self.intensifier.keys():
-                    intensify_word = '-'.joined(word_minus_four)
-                    scalar = self.intensifier[intensify_word]
-                intensifier = intensifier * (1 + scalar)
 
+                print(word + ' line 183')
                 # Perform Senti-word lookup
                 if (pos in impt) and (word not in stopwords_defined):
                     if pos in non_base:
                         # Find the base form of the given word
                         # i.e. -> going (as a verb) -> go for verb and nones only
                         word = wnl.lemmatize(word, self.pos_short(pos))
-                    if (word in self.pos['word']) and (word in self.neg['word']):
-                        if min(self.pos.get_loc(word)['layer'] >  \
-                            min(self.pos.get_loc(word)['layer']):
+                    if (word in self.pos['word'].tolist()) and \
+                        (word in self.neg['word'].tolist()):
+                        if min(self.pos.loc[self.pos.word == word,'layer']) >  \
+                            min(self.neg.loc[self.neg.word == word,'layer']):
                             score = -1
                         else:
                             score = 1
-                    elif word in self.pos['word']:
+                    elif word in self.pos['word'].tolist():
                         score = 1
-                    elif word in self.neg['word']:
+                    elif word in self.neg['word'].tolist():
                         score = -1
                     else:
                         score = 0
                     # Handle negation within neighborhood
+                    if (len(self.intensifier.keys().intersection(set(neighborhood)))) != 0:
+                        word_minus_one = sentence_token[index-1:index+1]
+                        word_minus_two = sentence_token[index-2:index+1]
+                        word_minus_three = sentence_token[index-3:index+1]
+                        word_minus_four = sentence_token[index-4:index+1]
+                        for word in neighborhood:
+                            if word in self.intensifier.keys():
+                                scalar = self.intensifier[word]
+                            elif '-'.join(word_minus_one) in self.intensifier.keys():
+                                intensify_word = '-'.join(word_minus_one)
+                                scalar = self.intensifier[intensify_word]
+                            elif '-'.join(word_minus_two) in self.intensifier.keys():
+                                intensify_word = '-'.join(word_minus_two)
+                                scalar = self.intensifier[intensify_word]
+                            elif '-'.join(word_minus_three) in self.intensifier.keys():
+                                intensify_word = '-'.join(word_minus_three)
+                                scalar = self.intensifier[intensify_word]
+                            elif '-'.join(word_minus_four) in self.intensifier.keys():
+                                intensify_word = '-'.join(word_minus_four)
+                                scalar = self.intensifier[intensify_word]
+                            intensifier = intensifier * (1 + scalar)
+                            print(intensifier)
                     if (len(negations.intersection(set(neighborhood))) == 1) & (score != 0):
                         score = score * (-1)
                     elif (len(negations.intersection(set(neighborhood))) == 1) & (score == 0):
                         score = -1
-                    elif (len(negations.intersection(set(neighborhood))) == 2) & (score != 0):
-                        score = score
-                    print(score)
+                    score = score * intensifier
                     scores.append(score)
+                    print(scores)
 
-            except:
+            except Exception as e:
+                print('There was an error: ' + str(e))
                 pass
             index += 1
 
         emo_score = 0
+        print(intensifier)
         for k,v in self.emoticon.items():
             if k in sentence:
                 emo_score += v
-
+        print(scores)
         if len(scores) > 0:
-            return intensifier * sum(scores) + emo_score
+            return sum(scores) + emo_score
         else:
             return emo_score
 
@@ -336,7 +318,7 @@ class yelpSentiModel(object):
 
 
 sentimodel = yelpSentiModel()
-text = "This place is very good. "
+text = "This place is very good but the service is bad. "
 print(sentimodel.score(text))
 
 '''
