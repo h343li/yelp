@@ -39,7 +39,7 @@ def get_key_comment(filename, filebus, long, thres1,thres2):
         right_on = 'business_id',how='left')
     data['text_sentence'] = data['text'].apply(lambda x: \
         tokenizer.tokenize(x.lower().replace('\n',' ')))
-    data = data[data['categories'].apply(lambda x: ('Restaurants' in str(x)) or ('Food' in str(x)))]
+    data = data[data['categories'].apply(lambda x: ('Restaurants' in str(x)) or ('Food' in str(x)) or ('Bars' in str(x)))]
 
     # Detect languages
 
