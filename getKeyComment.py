@@ -22,7 +22,7 @@ def det_lang(astring):
         return detect(astring)
     except:
         pass
-        
+
 def extract_key_text(comment,long, thres1,thres2):
     if len(comment) > long:
         key_comment = comment[0:math.floor(thres2/2)] + comment[-math.ceil(thres2/2):]
@@ -39,9 +39,9 @@ def get_key_comment(filename, filebus, long, thres1,thres2):
         right_on = 'business_id',how='left')
     data['text_sentence'] = data['text'].apply(lambda x: \
         tokenizer.tokenize(x.lower().replace('\n',' ')))
+    data = data[data['categories'].apply(lambda x: ('Restaurants' in str(x)) or ('Food' in str(x)))]
 
     # Detect languages
-
 
     data['language'] = data['text'].apply(lambda x:det_lang(x))
 
