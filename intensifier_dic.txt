@@ -215,3 +215,4 @@ not-all-that	-1.2
 not-that	-1.5
 out-of	-2
 even	1
+always	0.5

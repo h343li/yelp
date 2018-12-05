@@ -5,7 +5,8 @@ import nltk
 import numpy as np
 import re
 from stanfordnlp_class import StanfordNLP
-import pandas as import pd
+import pandas as pd
+from get_synonyms import senti_word, senti_dictionary
 
 impt = set(['NNS', 'NN', 'NNP', 'NNPS', 'JJ', 'JJR', 'JJS',
             'RB', 'RBR', 'RBS', 'VB', 'VBD', 'VBG', 'VBN',
@@ -47,7 +48,7 @@ transitional_word = set(["in the first place", "moreover", "as well as", "and", 
 class yelpSentiModel(object):
     '''A class defined obtain sentiment score based on analyser'''
 
-    def __init__(self, filename='yelpSentiWordNet.csv',inten_file = 'intensifier_dic.txt', \
+    def __init__(self, filename='SentiForest.pkl',inten_file = 'intensifier_dic.txt', \
     emo_file = 'AFINN_emoticon.txt'):
 
         # parse file and build sentiwordnet dicts
@@ -56,55 +57,8 @@ class yelpSentiModel(object):
         self.pos = []
         self.neg = []
         self.ntl = []
-        self.build_sentidict(filename)
         self.build_emoticondict(emo_file)
         self.build_intensifier(inten_file)
-
-
-    def build_sentidict(self, filename, weighting):
-        '''Parse sentiment score from yelpSentiWordNet'''
-        records = pd.read_csv(filename)
-        self.pos = records['Positive'][~pd.isna(records['Positive'])]
-        self.neg = records['Negative'][~pd.isna(records['Negative'])]
-        self.ntl = records['Neutral'][~pd.isna(records['Neutral'])]
-
-        records = [line.strip().split('\t') for line in open(filename)]
-        for rec in records:
-            words = rec[4].split()
-            pos = rec[0]
-
-            for aword in words:
-                word = aword.split('#')[0]
-                sense_num = int(aword.split('#')[1])
-
-                if word not in self.swn_pos[pos]:
-                    self.swn_pos[pos][word] = {}
-                self.swn_pos[pos][word][sense_num] = 5*(float(rec[2]) - float(rec[3]))
-                if word not in self.swn_all:
-                    self.swn_all[word] = {}
-                self.swn_all[word][sense_num] = 5*(float(rec[2]) - float(rec[3]))
-
-                # Sort senti scores based on sense_num
-        for pos_key in self.swn_pos.keys():
-            for word_key in self.swn_pos[pos_key].keys():
-                sorted_score = [self.swn_pos[pos_key][word_key][k] for k in
-                                sorted(self.swn_pos[pos_key][word_key].keys())]
-                if weighting == 'average':
-                    self.swn_pos[pos_key][word_key] = self.average(sorted_score)
-                if weighting == 'geometric':
-                    self.swn_pos[pos_key][word_key] = self.geometric_weighted(sorted_score)
-                if weighting == 'harmonic':
-                    self.swn_pos[pos_key][word_key] = self.harmonic_weighted(sorted_score)
-
-        for word_key in self.swn_all.keys():
-            sorted_score = [self.swn_all[word_key][k] for k in
-                            sorted(self.swn_all[word_key].keys())]
-            if weighting == 'average':
-                self.swn_all[word_key] = self.average(sorted_score)
-            if weighting == 'geometric':
-                self.swn_all[word_key] = self.geometric_weighted(sorted_score)
-            if weighting == 'harmonic':
-                self.swn_all[word_key] = self.harmonic_weighted(sorted_score)
 
     def build_intensifier(self,inten_file):
         '''Extract intensifier factor for sentence scoring'''
@@ -122,11 +76,28 @@ class yelpSentiModel(object):
             score = float(pair[1])
             self.emoticon[word] = score
 
+    def pos_short(self,pos):
+        # Convert from NLTK POS into SWN POS
+        if pos in set(['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ']):
+            return 'v'
+        elif pos in set(['JJ', 'JJR', 'JJS']):
+            return 'a'
+        elif pos in set(['RB', 'RBR', 'RBS']):
+            return 'r'
+        elif pos in set(['NNS', 'NN', 'NNP', 'NNPS']):
+            return 'n'
+        else:
+            return 'a'
+
+    '''
+    def build_sentitree(self,filename):
+        with open(filename,'rb') as word_dictionary:
+            all_words_tree = pickle.load(word_dictionary)
+    '''
 
     def score(self, sentence):
         '''Sentiment score of a given sentence, assuming sentence has been tokenzied'''
 
-        # amp_exist = False
         wnl = nltk.WordNetLemmatizer()
         sNLP= StanfordNLP()
         sentence_token = nltk.word_tokenize(sentence)
@@ -137,19 +108,31 @@ class yelpSentiModel(object):
 
         index = 0
         for el in tagger:
-            intensify = 1
+            intensifier = 1
+            scalar = 0
             pos = el[1]
             try:
                 word = re.match('(\w+)', el[0]).group(0).lower()
-                start = max(index - 7,0)
+                neighborhood = self.find_neighbour(sentence_token,word,index,7)
 
-                neighborhood = sentence_token[start:index]
                 # look for trailing multiword expressions
                 word_minus_one = sentence_token[index-1:index+1]
                 word_minus_two = sentence_token[index-2:index+1]
+                word_minus_three = sentence_token[index-3:index+1]
+                word_minus_four = sentence_token[index-4:index+1]
 
                 # if multiword expression, fold to one expression
-                if(self.is_multiword(word_minus_two)):
+                # Check multi-Senti words
+                if(self.is_multiword(word_minus_three)):
+                    if len(scores) > 2:
+                        scores.pop()
+                        scores.pop()
+                    if len(neighborhood) > 2:
+                        neighborhood.pop()
+                        neighborhood.pop()
+                    word = '-'.join(word_minus_three)
+                    pos = 'unknown'
+                elif(self.is_multiword(word_minus_two)):
                     if len(scores) > 1:
                         scores.pop()
                         scores.pop()
@@ -165,23 +148,43 @@ class yelpSentiModel(object):
                         neighborhood.pop()
                     word = '-'.join(word_minus_one)
                     pos = 'unknown'
-                # perform lookup
+
+                # Check if it's intensifier or not
+                if word in self.intensifier.keys():
+                    scalar = self.intensifier[word]
+                elif '-'.joined(word_minus_one) in self.intensifier.keys():
+                    intensify_word = '-'.joined(word_minus_one)
+                    scalar = self.intensifier[intensify_word]
+                elif '-'.joined(word_minus_two) in self.intensifier.keys():
+                    intensify_word = '-'.joined(word_minus_two)
+                    scalar = self.intensifier[intensify_word]
+                elif '-'.joined(word_minus_three) in self.intensifier.keys():
+                    intensify_word = '-'.joined(word_minus_three)
+                    scalar = self.intensifier[intensify_word]
+                elif '-'.joined(word_minus_four) in self.intensifier.keys():
+                    intensify_word = '-'.joined(word_minus_four)
+                    scalar = self.intensifier[intensify_word]
+                intensifier = intensifier * (1 + scalar)
+
+                # Perform Senti-word lookup
                 if (pos in impt) and (word not in stopwords_defined):
                     if pos in non_base:
                         # Find the base form of the given word
                         # i.e. -> going (as a verb) -> go for verb and nones only
                         word = wnl.lemmatize(word, self.pos_short(pos))
-                    score = self.score_word(word, self.pos_short(pos))
-                    sign = np.sign(score)
-                    if word in self.intensifier.keys():
-                        intensify = intensify * (1 + self.intensifier[word])
+                    # CHANGE!!!!!!!!!
+                    if word in self.pos:
+                        score = 1
+                    elif word in self.neg:
+                        score = -1
+                    elif word in self.ntl:
+                        score = 0
+                    # Handle negation within neighborhood
                     if (len(negations.intersection(set(neighborhood))) == 1) & (score != 0):
-                        score = score + 4*((-1)*sign)
+                        score = score * (-1)
                     elif (len(negations.intersection(set(neighborhood))) == 2) & (score != 0):
-                        score = score - 2*((-1)*sign)
-                    # Basically, assume at most one intensifier per sentence??
-                    # if len(amplifier.intersection(set(neighborhood))) > 0:
-                    #    amp_exist = True
+                        score = score
+
                     scores.append(score)
 
             except:
@@ -194,9 +197,10 @@ class yelpSentiModel(object):
                 emo_score += v
 
         if len(scores) > 0:
-            return intensify * sum(scores) + emo_score
+            return intensifier * sum(scores) + emo_score
         else:
             return emo_score
+
 
     def weighted_score(self, business_name, reviews):
         # Compute a weighted score for each review based on the existence of NNP
@@ -249,21 +253,14 @@ class yelpSentiModel(object):
         else:
             return 'Not a multiword'
 
-    def find_neighbour(self, sentence, word, pos):
-        token = nltk.word_tokenize(sentence)
-        read_before = True
-        read_after = True
+
+    def find_neighbour(self, token, word, pos, neighbour):
+        read_before, read_after = [True, True]
         tokens_b = []
-        token_1_b = ''
-        token_2_b = ''
-        token_3_b = ''
-        token_4_b = ''
-        token_neigh = []
-        token_1_a = ''
-        token_2_a = ''
-        token_3_a = ''
-        token_4_a = ''
         tokens_a = []
+        token_1_b, token_2_b,token_3_b,token_4_b = ['','','','']
+        token_neigh = []
+        token_1_a, token_2_a,token_3_a,token_4_a = ['','','','']
         for i in range(neighbour):
             k = i+1
             pos_before = pos - k
@@ -317,14 +314,19 @@ class yelpSentiModel(object):
                     token_neigh.append(token[pos_after])
                 else:
                     token_neigh.append(token[pos_after])
+        return token_neigh
 
-sentimodel = baseSentiModel()
-text = "This place doesn't even deserve one star :(. "
+
+
+sentimodel = yelpSentiModel()
+text = "This place is definitely a five star, but it was very expensive. "
 print(sentimodel.score(text))
 
+'''
 name = 'Smashburger'
 test_review = ['Bbq, bacon burger is awesome!', 'Salads are great for 2.', \
 'Been coming here since it opened a few years ago for take out and dine in.', \
 'Staff has always been friendly and courteous.', \
 "3 rating because we love Smash fries but over the years, it's gotten more and more greasy."]
 print(sentimodel.weighted_score(name,test_review))
+'''
