@@ -45,18 +45,34 @@ transitional_word = set(["in the first place", "moreover", "as well as", "and", 
                         "nevertheless", "even though", "when", "so that", "whenever",
                         "while", ""])
 
+def flatten_tree(filename):
+    '''inputs filename, a pickle directory of senti_dictionary and returns a data frame of word, sentiment,
+    layer, and parent'''
+    sentiDict = senti_dictionary(filename)
+    col_name = ['word', 'sentiment', 'layer', 'parent']
+    senti_df = pd.DataFrame(columns = col_name)
+    for key, tree in sentiDict.cur_dict.items():
+        root_word = tree.name[0]
+        tree_senti = tree.name[1]
+        senti_df.loc[senti_df.shape[0]] = [root_word, tree_senti, 0, 'root']
+        for layer_one in tree.children:
+            senti_df.loc[senti_df.shape[0]] = [layer_one.name, tree_senti, 1, root_word]
+            for layer_two in layer_one.children:
+                senti_df.loc[senti_df.shape[0]] = [layer_two.name, tree_senti, 2, layer_one.name]
+    return senti_df
+
 class yelpSentiModel(object):
     '''A class defined obtain sentiment score based on analyser'''
 
     def __init__(self, filename='SentiForest.pkl',inten_file = 'intensifier_dic.txt', \
     emo_file = 'AFINN_emoticon.txt'):
-
+        flatten_dict = flatten_tree(filename)
         # parse file and build sentiwordnet dicts
         self.intensifier = {}
         self.emoticon = {}
-        self.pos = []
-        self.neg = []
-        self.ntl = []
+        self.pos = flatten_dict[flatten_dict['sentiment'] = 'Positive']
+        self.neg = flatten_dict[flatten_dict['sentiment'] = 'Negative']
+        self.ntl = flatten_dict[flatten_dict['sentiment'] = 'Neutral']
         self.build_emoticondict(emo_file)
         self.build_intensifier(inten_file)
 
@@ -88,12 +104,6 @@ class yelpSentiModel(object):
             return 'n'
         else:
             return 'a'
-
-    '''
-    def build_sentitree(self,filename):
-        with open(filename,'rb') as word_dictionary:
-            all_words_tree = pickle.load(word_dictionary)
-    '''
 
     def score(self, sentence):
         '''Sentiment score of a given sentence, assuming sentence has been tokenzied'''
@@ -172,19 +182,26 @@ class yelpSentiModel(object):
                         # Find the base form of the given word
                         # i.e. -> going (as a verb) -> go for verb and nones only
                         word = wnl.lemmatize(word, self.pos_short(pos))
-                    # CHANGE!!!!!!!!!
-                    if word in self.pos:
+                    if (word in self.pos['word']) and (word in self.neg['word']):
+                        if min(self.pos.get_loc(word)['layer'] >  \
+                            min(self.pos.get_loc(word)['layer']):
+                            score = -1
+                        else:
+                            score = 1
+                    elif word in self.pos['word']:
                         score = 1
-                    elif word in self.neg:
+                    elif word in self.neg['word']:
                         score = -1
-                    elif word in self.ntl:
+                    else:
                         score = 0
                     # Handle negation within neighborhood
                     if (len(negations.intersection(set(neighborhood))) == 1) & (score != 0):
                         score = score * (-1)
+                    elif (len(negations.intersection(set(neighborhood))) == 1) & (score == 0):
+                        score = -1
                     elif (len(negations.intersection(set(neighborhood))) == 2) & (score != 0):
                         score = score
-
+                    print(score)
                     scores.append(score)
 
             except:
@@ -244,11 +261,11 @@ class yelpSentiModel(object):
     def is_multiword(self, words):
         '''Check if a group of words is indeed a multiword expression'''
         joined = '-'.join(words)
-        if joined in self.pos:
+        if joined in self.pos['word']:
             return 'Positive'
-        elif joined in self.neg:
+        elif joined in self.neg['word']:
             return 'Negative'
-        elif joined in self.ntl:
+        elif joined in self.ntl['word']:
             return 'Neutral'
         else:
             return 'Not a multiword'
@@ -319,7 +336,7 @@ class yelpSentiModel(object):
 
 
 sentimodel = yelpSentiModel()
-text = "This place is definitely a five star, but it was very expensive. "
+text = "This place is very good. "
 print(sentimodel.score(text))
 
 '''
