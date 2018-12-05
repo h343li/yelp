@@ -50,27 +50,30 @@ class senti_dictionary:
             pickle.dump(self.cur_dict,output)
 
 
-    def add_to_dict(self, new_word, sentiment, num_layer = 0):
+    def add_to_dict(self, new_word, sentiment, get_tree = True, num_layer = 1):
         tmp = self.cur_dict.keys()
         current_roots = list(map(lambda x: x[0],tmp))
         if new_word in current_roots:
             exit('Already existed!')
+        if get_tree:
+            newWord = senti_word(new_word, sentiment)
+            word_tree = newWord.word_tree
+            while num_layer > 1:
+                for child in word_tree.children:
+                    senti_word(child.name,sentiment,child)
+                num_layer = num_layer - 1
 
-        newWord = senti_word(new_word, sentiment)
-        word_tree = newWord.word_tree
-        while num_layer > 0:
-            for child in word_tree.children:
-                senti_word(child.name,sentiment,child)
-            num_layer = num_layer - 1
+            self.cur_dict[new_word] = word_tree
+        else:
+            self.cur_dict[new_word] = Node(new_word)
 
-        self.cur_dict[new_word] = word_tree
 ##############################################################################
 # Dictionary Construction ####################################################
 ##############################################################################
-word = 'easy'
+word = 'ok'
 
 yelp_senti = senti_dictionary(in_file = "SentiForest.pkl")
-yelp_senti.add_to_dict(word,'Positive',1)
+yelp_senti.add_to_dict(word,'Neutral',True,2)
 yelp_senti.export('SentiForest.pkl')
 '''''
 neutral = ['ok','okay','alright','expected','common','acceptable','satisfactory','fat',\
