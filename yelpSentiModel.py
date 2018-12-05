@@ -65,11 +65,13 @@ class yelpSentiModel(object):
     '''A class defined obtain sentiment score based on analyser'''
 
     def __init__(self, filename='SentiForest.pkl',inten_file = 'intensifier_dic.txt', \
-    emo_file = 'AFINN_emoticon.txt'):
+    emo_file = 'AFINN_emoticon.txt', conjuction_file = 'conjunction_word.txt'):
         flatten_dict = flatten_tree(filename)
         # parse file and build sentiwordnet dicts
         self.intensifier = {}
         self.emoticon = {}
+        self.conjunction_word = [line.replace('\n','')  \
+            for line in open(conjuction_file)]
         self.pos = flatten_dict[flatten_dict['sentiment'] == 'Positive']
         self.neg = flatten_dict[flatten_dict['sentiment'] == 'Negative']
         self.ntl = flatten_dict[flatten_dict['sentiment'] == 'Neutral']
@@ -154,7 +156,7 @@ class yelpSentiModel(object):
                     else:
                         score = 0
                     # Handle negation within neighborhood
-                    if (len(self.intensifier.keys().intersection(set(neighborhood)))) != 0:
+                    if (len(set(self.intensifier.keys()).intersection(set(neighborhood)))) != 0:
                         word_minus_one = sentence_token[index-1:index+1]
                         word_minus_two = sentence_token[index-2:index+1]
                         word_minus_three = sentence_token[index-3:index+1]
@@ -252,8 +254,7 @@ class yelpSentiModel(object):
         else:
             return 'Not a multiword'
 
-
-    def find_neighbour(self, token, word, pos, neighbour):
+    def find_neighbour(self, token, word, pos, neighbour=5):
         read_before, read_after = [True, True]
         tokens_b = []
         tokens_a = []
@@ -283,44 +284,49 @@ class yelpSentiModel(object):
                     token_2_b = token[pos_before] + ' ' + token_1_b
                     token_1_b = token[pos_before]
                     tokens_b = [token_4_b, token_3_b, token_2_b, token_1_b]
-                if any(x in tokens_b for x in transitional_word) or (pos_before < 0):
+                if any(x in tokens_b for x in self.conjunction_word) or (pos_before < 0):
                     read_before = False
                 else:
-                    token_neigh.append(token[pos_before])
+                    token_neigh.extend(tokens_b)
             if read_after:
                 if k == 1:
                     token_1_a = token[pos_after]
                     tokens_a = [token_1_a]
                 elif k == 2:
-                    token_2_a = token[pos_after] + " " + token_1_a
+                    token_2_a = token_1_a + " " + token[pos_after]
                     token_1_a = token[pos_after]
                     tokens_a = [token_2_a, token_1_a]
                 elif k == 3:
-                    token_3_a = token[pos_after] + " " + token_2_a
-                    token_2_a = token[pos_after] + " " + token_1_a
+                    token_3_a = token_2_a + " " + token[pos_after]
+                    token_2_a = token_1_a + " " + token[pos_after]
                     token_1_a = token[pos_after]
                     tokens_a = [token_3_a, token_2_a, token_1_a]
                 else:
-                    token_4_a = token[pos_after] + " " + token_3_a
-                    token_3_a = token[pos_after] + " " + token_2_a
-                    token_2_a = token[pos_after] + " " + token_1_a
+                    token_4_a = token_3_a + " " + token[pos_after]
+                    token_3_a = token_2_a + " " + token[pos_after]
+                    token_2_a = token_1_a + " " + token[pos_after]
                     token_1_a = token[pos_after]
                     tokens_a = [token_4_a, token_3_a, token_2_a, token_1_a]
-                if any(x in tokens_a for x in transitional_word):
+                if any(x in tokens_a for x in self.conjunction_word):
                     read_after = False
                 elif pos_after >= len(token)-1:
                     read_after = False
-                    token_neigh.append(token[pos_after])
+                    token_neigh.extend(tokens_a)
                 else:
-                    token_neigh.append(token[pos_after])
+                    token_neigh.extend(tokens_a)
         return token_neigh
 
 
 
 sentimodel = yelpSentiModel()
-text = "This place is very good but the service is bad. "
+text = "This place is very good the service is great. "
+token = nltk.word_tokenize(text)
+word = 'good'
+pos = 4
+neighbour = 5
 print(sentimodel.score(text))
-
+test = sentimodel.find_neighbour(token, word, pos)
+print(test)
 '''
 name = 'Smashburger'
 test_review = ['Bbq, bacon burger is awesome!', 'Salads are great for 2.', \
