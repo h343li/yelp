@@ -221,3 +221,4 @@ surprisingly	1
 surprised	0.5
 regularly	0.3
 honestly	0.3
+too-much 0.7

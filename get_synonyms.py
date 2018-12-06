@@ -73,16 +73,18 @@ class senti_dictionary:
 word = 'ok'
 
 yelp_senti = senti_dictionary(in_file = "SentiForest.pkl")
-yelp_senti.add_to_dict('five-star','Positive',False,2)
+yelp_senti.add_to_dict('one-star','Negative',False,2)
 yelp_senti.export('SentiForest.pkl')
 
 neutral = ['ok','okay','alright','expected','common','acceptable','satisfactory','fat',\
-'dry','lean','fine']
+'dry','lean','fine','reasonable','average','pedestrian', 'soft']
 positive = ['good','great','nice','friendly','recommend','amazing','better','new','delicious','clean',\
 'happy','fresh','different','fantastic','wonderful','fast','professional','cheap','comfortable',\
-'authentic','pleasant','helpful','beautiful']
+'authentic','pleasant','helpful','beautiful', 'warm', 'impressive','impressed','fabulous', \
+'yummy', 'excellent', 'extensive','tender', 'favourite', 'favorite', 'like']
 negative = ['bad','nasty','rude','mean','worse','old','unhappy','mad','dirty','slow','unprofessional'\
-'expensive','uncomfortable','ugly','unhelpful','unless']
+'expensive','uncomfortable','ugly','unhelpful','unless','awful','poor','disappoint','mundane',
+'terrible', 'ignore','hate','lack', 'poison', 'inferior', 'late', 'disrespectful']
 
 for word in neutral:
     yelp_senti.add_to_dict(word, 'Neutral', True, 2)
