@@ -152,7 +152,9 @@ class yelpSentiModel(object):
                 # Check multi-Senti words
 
                 # Perform Senti-word lookup
-                if (pos in impt) and (word not in stopwords_defined):
+                if (pos in impt) and (word not in stopwords_defined) and \
+                    ((word in self.pos['word'].tolist()) or (word in self.neg['word'].tolist()) or \
+                    (word in self.ntl['word'].tolist())):
                     if pos in non_base:
                         # Find the base form of the given word
                         # i.e. -> going (as a verb) -> go for verb and nones only
@@ -241,7 +243,11 @@ class yelpSentiModel(object):
                         non_nnp_list.append(j)
                 else:
                     non_nnp_list.append(j)
-                weight_non_nnp = (1 - sum(weight_list))/len(non_nnp_list)
+
+                if len(non_nnp_list) > 0:
+                    weight_non_nnp = (1 - sum(weight_list))/len(non_nnp_list)
+                else:
+                    weight_non_nnp = 0
             for k in non_nnp_list:
                 weight_list[k] = weight_non_nnp
 
