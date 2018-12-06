@@ -216,7 +216,7 @@ class yelpSentiModel(object):
         idx = 0
         nnp_name = ''
         if len(reviews) == 1:
-            return self.score(sentence)
+            return self.score(reviews[0])
         else:
             for j in range(len(reviews)):
                 sentence = reviews[j]
@@ -244,7 +244,7 @@ class yelpSentiModel(object):
                 weight_non_nnp = (1 - sum(weight_list))/len(non_nnp_list)
             for k in non_nnp_list:
                 weight_list[k] = weight_non_nnp
-                
+
             return sum(x*y for x,y in zip(weight_list, score_list))
 
     def is_multiword(self, words):
