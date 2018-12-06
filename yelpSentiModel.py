@@ -215,33 +215,37 @@ class yelpSentiModel(object):
         score_list =[]
         idx = 0
         nnp_name = ''
-        for j in range(len(reviews)):
-            sentence = reviews[j]
-            score_sen = self.score(sentence)
-            score_list.append(score_sen)
-            tag_pair = sNLP.pos(sNLP.to_truecase(sentence))
-            word_list = [pair[0] for pair in tag_pair]
-            tag_list = [pair[1] for pair in tag_pair]
-            if ('NNP' in tag_list) | ('NNPS' in tag_list):
-                idx = 0
-                nnp_name = ''
-                if 'NNP' in tag_list:
-                    idx = tag_list.index('NNP')
-                elif 'NNPS' in tag_list:
-                    idx = tag_list.index('NNPS')
+        if len(reviews) == 1:
+            return self.score(sentence)
+        else:
+            for j in range(len(reviews)):
+                sentence = reviews[j]
+                score_sen = self.score(sentence)
+                score_list.append(score_sen)
+                tag_pair = sNLP.pos(sNLP.to_truecase(sentence))
+                word_list = [pair[0] for pair in tag_pair]
+                tag_list = [pair[1] for pair in tag_pair]
+                if ('NNP' in tag_list) | ('NNPS' in tag_list):
+                    idx = 0
+                    nnp_name = ''
+                    if 'NNP' in tag_list:
+                        idx = tag_list.index('NNP')
+                    elif 'NNPS' in tag_list:
+                        idx = tag_list.index('NNPS')
 
-                nnp_name = word_list[idx]
-                if nnp_name == business_name:
-                    weight_multiplier = 0.5
-                    weight_list[j] = weight_multiplier*weight
+                    nnp_name = word_list[idx]
+                    if nnp_name == business_name:
+                        weight_multiplier = 0.5
+                        weight_list[j] = weight_multiplier*weight
+                    else:
+                        non_nnp_list.append(j)
                 else:
                     non_nnp_list.append(j)
-            else:
-                non_nnp_list.append(j)
-        weight_non_nnp = (1 - sum(weight_list))/len(non_nnp_list)
-        for k in non_nnp_list:
-            weight_list[k] = weight_non_nnp
-        return sum(x*y for x,y in zip(weight_list, score_list))
+                weight_non_nnp = (1 - sum(weight_list))/len(non_nnp_list)
+            for k in non_nnp_list:
+                weight_list[k] = weight_non_nnp
+                
+            return sum(x*y for x,y in zip(weight_list, score_list))
 
     def is_multiword(self, words):
         '''Check if a group of words is indeed a multiword expression'''
