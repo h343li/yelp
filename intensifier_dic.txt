@@ -1,6 +1,6 @@
 the-least	-3
 less	-1.5
-barely	-1.5
+barely	-2
 hardly	-2
 almost	-1.5
 not-too	-1.5
@@ -188,7 +188,7 @@ a-couple	-0.3
 a-couple-of	-0.3
 a-lot-of	0.3
 lots-of		0.3
-at-all	-0.5
+at-all	-3
 a-great-deal-of	0.5
 a-whole-lot-of	0.5
 a-huge-amount-of	0.5
@@ -211,7 +211,7 @@ difficult-to	-1.5
 hard-to	-1.5
 tough-to	-1.5
 nowhere-near	-3
-not-all-that	-1.2
+not-all-that	-2
 not-that	-1.5
 out-of	-2
 even	1
