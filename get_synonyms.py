@@ -81,10 +81,11 @@ neutral = ['ok','okay','alright','expected','common','acceptable','satisfactory'
 positive = ['good','great','nice','friendly','recommend','amazing','better','new','delicious','clean',\
 'happy','fresh','different','fantastic','wonderful','fast','professional','cheap','comfortable',\
 'authentic','pleasant','helpful','beautiful', 'warm', 'impressive','impressed','fabulous', \
-'yummy', 'excellent', 'extensive','tender', 'favourite', 'favorite', 'like']
+'yummy', 'excellent', 'extensive','tender', 'favourite', 'favorite', 'like','flavorful']
 negative = ['bad','nasty','rude','mean','worse','old','unhappy','mad','dirty','slow','unprofessional'\
 'expensive','uncomfortable','ugly','unhelpful','unless','awful','poor','disappoint','mundane',
-'terrible', 'ignore','hate','lack', 'poison', 'inferior', 'late', 'disrespectful']
+'terrible', 'ignore','hate','lack', 'poison', 'inferior', 'late', 'disrespectful','misleading',\
+'lacking','horrible','miserable','sketchy']
 
 for word in neutral:
     yelp_senti.add_to_dict(word, 'Neutral', True, 2)
