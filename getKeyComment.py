@@ -36,7 +36,7 @@ def get_key_comment(filename, filebus, long, thres1,thres2):
     file = pd.read_csv(filename)
     bus_file = pd.read_csv(filebus)
     data = file.merge(bus_file, left_on = 'business_id', \
-        right_on = 'business_id',how='left')
+        right_on = 'business_id',how='right')
     data['text_sentence'] = data['text'].apply(lambda x: \
         tokenizer.tokenize(x.lower().replace('\n',' ')))
     data = data[data['categories'].apply(lambda x: ('Restaurants' in str(x)) or ('Food' in str(x)) or ('Bars' in str(x)))]
