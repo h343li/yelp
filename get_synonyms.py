@@ -74,18 +74,26 @@ word = 'ok'
 
 yelp_senti = senti_dictionary(in_file = "SentiForest.pkl")
 yelp_senti.add_to_dict('one-star','Negative',False,2)
+yelp_senti.add_to_dict('under-trained','Negative',False,2)
+yelp_senti.add_to_dict('stay-away','Positive',False,2)
+yelp_senti.add_to_dict('above-average','Positive',False,2)
+yelp_senti.add_to_dict('die-for','Positive',False,2)
+yelp_senti.add_to_dict('go-to','Positive',False,2)
 yelp_senti.export('SentiForest.pkl')
 
 neutral = ['ok','okay','alright','expected','common','acceptable','satisfactory','fat',\
-'dry','lean','fine','reasonable','average','pedestrian', 'soft']
+'dry','lean','fine','reasonable','average','soft','crunchy','smoky','sweet']
 positive = ['good','great','nice','friendly','recommend','amazing','better','new','delicious','clean',\
 'happy','fresh','different','fantastic','wonderful','fast','professional','cheap','comfortable',\
 'authentic','pleasant','helpful','beautiful', 'warm', 'impressive','impressed','fabulous', \
-'yummy', 'excellent', 'extensive','tender', 'favourite', 'favorite', 'like','flavorful']
+'yummy', 'excellent', 'extensive','tender', 'favourite', 'favorite', 'like','flavorful','thanks',
+'convenient','memorable','indulgent','attentive','spacious','paramount']
 negative = ['bad','nasty','rude','mean','worse','old','unhappy','mad','dirty','slow','unprofessional'\
 'expensive','uncomfortable','ugly','unhelpful','unless','awful','poor','disappoint','mundane',
 'terrible', 'ignore','hate','lack', 'poison', 'inferior', 'late', 'disrespectful','misleading',\
-'lacking','horrible','miserable','sketchy']
+'lacking','horrible','miserable','sketchy','stale','rancid','sour','inedible','unplatable',
+'dull','insipid','pedestrian','mediocre','annoying','underwhelming','unattentive',
+'ridiculous','garbage','overcooked','embarrass']
 
 for word in neutral:
     yelp_senti.add_to_dict(word, 'Neutral', True, 2)
