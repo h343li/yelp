@@ -258,7 +258,7 @@ class yelpSentiModel(object):
         joined = '-'.join(words)
         if (joined in self.pos['word'].tolist()) or \
             (joined in self.neg['word'].tolist()) or \
-            (joined in self.ntl['word'].tolist()) or
+            (joined in self.ntl['word'].tolist()) or \
             (joined in self.intensifier.keys()):
             return True
         else:
