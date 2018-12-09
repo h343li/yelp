@@ -268,7 +268,7 @@ class yelpSentiModel(object):
         else:
             return False
 
-    def find_neighbour(self, token, pos, neighbour=5):
+    def find_neighbour(self, token, pos, neighbour=10):
         read_before, read_after = [True, True]
         tokens_b = []
         tokens_a = []
