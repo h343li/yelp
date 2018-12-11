@@ -217,40 +217,52 @@ class yelpSentiModel(object):
         score_list =[]
         idx = 0
         nnp_name = ''
+        upweight = 2
         if len(reviews) == 1:
             return self.score(reviews[0])
         else:
             try:
+                score_list = list(map(lambda x: self.score(x), reviews))
+                num_pos = sum(map(lambda x: x > 0, score_list))
+                num_neg = sum(map(lambda x: x < 0, score_list))
+                num_ntl = sum(map(lambda x: x = 0, score_list))
                 for j in range(len(reviews)):
-                    sentence = reviews[j]
-                    score_sen = self.score(sentence)
-                    score_list.append(score_sen)
-                    tag_pair = sNLP.pos(sNLP.to_truecase(sentence))
-                    word_list = [pair[0] for pair in tag_pair]
-                    tag_list = [pair[1] for pair in tag_pair]
-                    if ('NNP' in tag_list) | ('NNPS' in tag_list):
-                        idx = 0
-                        nnp_name = ''
-                        if 'NNP' in tag_list:
-                            idx = tag_list.index('NNP')
-                        elif 'NNPS' in tag_list:
-                            idx = tag_list.index('NNPS')
+                    if score_list[j] != 0:
+                        sentence = reviews[j]
+                        tag_pair = sNLP.pos(sNLP.to_truecase(sentence))
+                        word_list = [pair[0] for pair in tag_pair]
+                        tag_list = [pair[1] for pair in tag_pair]
+                        if ('NNP' in tag_list) | ('NNPS' in tag_list):
+                            idx = 0
+                            nnp_name = ''
+                            if 'NNP' in tag_list:
+                                idx = tag_list.index('NNP')
+                            elif 'NNPS' in tag_list:
+                                idx = tag_list.index('NNPS')
 
-                        nnp_name = word_list[idx]
-                        if nnp_name == business_name:
-                            weight_multiplier = 0.5
-                            weight_list[j] = weight_multiplier*weight
+                            nnp_name = word_list[idx]
+                            if nnp_name == business_name:
+                                weight_multiplier = 0.5
+                                weight_list[j] = weight_multiplier*weight
+                            else:
+                                non_nnp_list.append(j)
                         else:
                             non_nnp_list.append(j)
-                    else:
-                        non_nnp_list.append(j)
+                    weight_non_nnp = ((1 - sum(weight_list))/len(non_nnp_list)) * (len(non_nnp_list) > 0)
 
-                    if len(non_nnp_list) > 0:
-                        weight_non_nnp = (1 - sum(weight_list))/len(non_nnp_list)
-                    else:
-                        weight_non_nnp = 0
                 for k in non_nnp_list:
-                    weight_list[k] = weight_non_nnp
+                    if num_pos > num_neg:
+                        if score_list[k] > 0:
+                            weight_list[k] = weight_non_nnp * 2
+                        else:
+                            weight_list[k] = weight_non_nnp
+                    elif num_pos < num_neg:
+                        if score_list[k] < 0:
+                            weight_list[k] = weight_non_nnp * 2
+                        else:
+                            weight_list[k] = weight_non_nnp
+                    else:
+                        weight_list[k] = weight_non_nnp
 
             except:
                 pass

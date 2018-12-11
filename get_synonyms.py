@@ -78,22 +78,22 @@ yelp_senti.add_to_dict('under-trained','Negative',False,2)
 yelp_senti.add_to_dict('stay-away','Positive',False,2)
 yelp_senti.add_to_dict('above-average','Positive',False,2)
 yelp_senti.add_to_dict('die-for','Positive',False,2)
-yelp_senti.add_to_dict('go-to','Positive',False,2)
+yelp_senti.add_to_dict('below-average','Positive',False,2)
 yelp_senti.export('SentiForest.pkl')
 
-neutral = ['ok','okay','alright','expected','common','acceptable','satisfactory','fat',\
-'dry','lean','fine','reasonable','average','soft','crunchy','smoky','sweet']
+neutral = ['ok','okay','alright','expected','common','acceptable','satisfactory',\
+'lean','fine','reasonable','average','soft','crunchy','smoky','sweet']
 positive = ['good','great','nice','friendly','recommend','amazing','better','new','delicious','clean',\
 'happy','fresh','different','fantastic','wonderful','fast','professional','cheap','comfortable',\
 'authentic','pleasant','helpful','beautiful', 'warm', 'impressive','impressed','fabulous', \
-'yummy', 'excellent', 'extensive','tender', 'favourite', 'favorite', 'like','flavorful','thanks',
-'convenient','memorable','indulgent','attentive','spacious','paramount']
-negative = ['bad','nasty','rude','mean','worse','old','unhappy','mad','dirty','slow','unprofessional'\
-'expensive','uncomfortable','ugly','unhelpful','unless','awful','poor','disappoint','mundane',
+'yummy', 'excellent', 'extensive','tender', 'favourite', 'favorite', 'like','flavorful','thanks', \
+'convenient','memorable','indulgent','attentive','spacious','paramount','worth']
+negative = ['bad','nasty','rude','mean','worse','old','unhappy','mad','dirty','slow','mushy','unprofessional',\
+'expensive','uncomfortable','ugly','unhelpful','unless','awful','poor','disappoint','disappointment','mundane', 'fat', \
 'terrible', 'ignore','hate','lack', 'poison', 'inferior', 'late', 'disrespectful','misleading',\
-'lacking','horrible','miserable','sketchy','stale','rancid','sour','inedible','unplatable',
-'dull','insipid','pedestrian','mediocre','annoying','underwhelming','unattentive',
-'ridiculous','garbage','overcooked','embarrass']
+'lacking','horrible','miserable','sketchy','stale','rancid','sour','inedible','dry','unplatable', \
+'dull','insipid','pedestrian','mediocre','annoying','underwhelming','unattentive', \
+'ridiculous','garbage','overcooked','embarrass','waste','lack','mess']
 
 for word in neutral:
     yelp_senti.add_to_dict(word, 'Neutral', True, 2)
@@ -106,6 +106,3 @@ for word in positive:
 for word in negative:
     yelp_senti.add_to_dict(word, 'Negative', True, 2)
     yelp_senti.export('SentiForest.pkl')
-
-
-# yelp_senti.export(out_file = "yelpSentiWordNet0.csv")
