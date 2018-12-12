@@ -225,7 +225,7 @@ class yelpSentiModel(object):
                 score_list = list(map(lambda x: self.score(x), reviews))
                 num_pos = sum(map(lambda x: x > 0, score_list))
                 num_neg = sum(map(lambda x: x < 0, score_list))
-                num_ntl = sum(map(lambda x: x = 0, score_list))
+                num_ntl = sum(map(lambda x: x == 0, score_list))
                 for j in range(len(reviews)):
                     if score_list[j] != 0:
                         sentence = reviews[j]
