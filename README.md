@@ -21,3 +21,5 @@ model assigns each review a corresponding sentiment score based on its semantic 
 Then, it applies Latent Dirichlet Allocation (Blei et al., 2003) (LDA)[2] to selected businesses, aiming to extract global
 topics as highlights and/or opportunities for improvement of the restaurants. Using these Yelp reviews as a starting
 point, we hope to extend the model to all public tweets/texts on different social platforms.
+
+!(/yelp/ULSTM.pdf "Infographic")
