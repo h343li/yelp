@@ -23,8 +23,7 @@ topics as highlights and/or opportunities for improvement of the restaurants. Us
 point, we hope to extend the model to all public tweets/texts on different social platforms.
 
 <img src="/ULSTM.pdf"
-     alt="Markdown Monster icon"
-     style="float: left; margin-right: 10px;" />
+     alt="Markdown Monster icon"/>
 
 <object data="/ULSTM.pdf" width="700px" height="700px">
     <embed src="/ULSTM.pdf">
