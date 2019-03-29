@@ -25,7 +25,7 @@ point, we hope to extend the model to all public tweets/texts on different socia
 <img src="/ULSTM.pdf"
      alt="Markdown Monster icon"/>
      
-![Poster](ULSTM.pdf)
+<img src="/ULSTM.pdf" width="800" />
 
 <object data="/ULSTM.pdf" width="700px" height="700px">
     <embed src="/ULSTM.pdf">
