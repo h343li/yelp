@@ -22,8 +22,7 @@ Then, it applies Latent Dirichlet Allocation (Blei et al., 2003) (LDA)[2] to sel
 topics as highlights and/or opportunities for improvement of the restaurants. Using these Yelp reviews as a starting
 point, we hope to extend the model to all public tweets/texts on different social platforms.
 
-<img src="/ULSTM.pdf"
-     alt="Markdown Monster icon"/>
+![alternativetext](/ULSTM.pdf)
      
 <img src="/ULSTM.pdf" width="800" />
 
