@@ -26,8 +26,8 @@ point, we hope to extend the model to all public tweets/texts on different socia
      alt="Markdown Monster icon"
      style="float: left; margin-right: 10px;" />
 
-<object data="https://github.com/h343li/yelp/blob/master/ULSTM.pdf" type="application/pdf" width="700px" height="700px">
-    <embed src="https://github.com/h343li/yelp/blob/master/ULSTM.pdf">
+<object data="/ULSTM.pdf" width="700px" height="700px">
+    <embed src="/ULSTM.pdf">
         <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/h343li/yelp/blob/master/ULSTM.pdf">Download PDF</a>.</p>
     </embed>
 </object>
