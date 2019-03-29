@@ -1,4 +1,5 @@
 ##INTRODUCTION
+========
 Inspired by Taboada et al. (2011)[6] and Hu and Liu (2004)[3], we present the Unsupervised Lexicon-Based
 Sentiment Topic Model (ULSTM) using a self-established sentiment lexicon. The current application of the model
 mainly concerns with reviews from the Yelp Open Dataset, which contains almost 6-million customer reviews. The
