@@ -1,24 +1,7 @@
-In this package, we assume input reviews for clustering and prediction are made of normal texts.
+Inspired by Taboada et al. (2011)[6] and Hu and Liu (2004)[3], we present the Unsupervised Lexicon-Based
+Sentiment Topic Model (ULSTM) using a self-established sentiment lexicon. The current application of the model
+mainly concerns with reviews from the Yelp Open Dataset, which contains almost 6-million customer reviews. The
+model assigns each review a corresponding sentiment score based on its semantic meaning and syntactic structure.
+Then, it applies Latent Dirichlet Allocation (Blei et al., 2003) (LDA)[2] to selected businesses, aiming to extract global
+topics as highlights and/or opportunities for improvement of the restaurants. 
 
-Some useful terminal/git commands:
-git add -A: stages all files in the folder. 
-git add filename: stages filename
-git commit -m message: commits files in the folder
-git push origin master: pushes commited files
-git pull origin master: pulls changes
-git rm -r --cached filename: ignore previous commit
-git status: current status
-git log --oneline: check git history
-NOTE: it does not matter that the file is not in your current checked version 
-it's in the project history and will always be attempted to be pushed
-git reset --hard commitID: changes current commit to commitID and removes all 
-attempted commits after commitID.
-
-vim filename: opens editor
-shift + i: inserts inside vim
-esc: exits insert
-: + x: saves changes
-touch filename: creates the file
-
-Connection to stanford corenlp server
-java -mx4g -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer -annotators "tokenize,ssplit,pos,lemma,parse,sentiment" -port 9000 -timeout 30000
